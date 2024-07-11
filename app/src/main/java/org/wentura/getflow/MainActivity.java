@@ -197,6 +197,7 @@ public class MainActivity extends AppCompatActivity {
                 statusReceiver, new IntentFilter(Constants.UPDATE_UI));
     }
 
+    @SuppressLint("MissingSuperCall")
     @Override
     public void onBackPressed() {
         SharedPreferences sharedPreferences =
@@ -338,14 +339,13 @@ public class MainActivity extends AppCompatActivity {
             popup.setOnMenuItemClickListener(item -> {
                 getWindow().clearFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
 
-                switch (item.getItemId()) {
-                    case R.id.settings:
+                if (item.getItemId()==R.id.settings) {
                         startSettingsActivity();
-                        return true;
-                    case R.id.statistics:
+                        return true;}
+                    else if (item.getItemId()==R.id.statistics){
                         startStatisticsActivity();
-                        return true;
-                    case R.id.about:
+                        return true;}
+                   else if ( item.getItemId()==R.id.about){
                         startAboutActivity();
                         return true;
                 }

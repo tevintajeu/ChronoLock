@@ -16,7 +16,7 @@
   -->
 
 <resources>
-    <string name="app_name" translatable="false">GetFlow</string>
+    <string name="app_name" translatable="false">ChronoLock</string>
     <string name="work_icon">Work</string>
     <string name="break_icon">Break</string>
     <string name="do_not_disturb_summary">Enable do not disturb during work session</string>

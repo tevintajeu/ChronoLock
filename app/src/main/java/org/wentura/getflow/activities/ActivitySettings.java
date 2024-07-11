@@ -17,6 +17,7 @@
 
 package org.wentura.getflow.activities;
 
+import android.annotation.SuppressLint;
 import android.app.NotificationManager;
 import android.content.Context;
 import android.content.Intent;
@@ -54,6 +55,8 @@ import org.wentura.getflow.Constants;
 import org.wentura.getflow.R;
 import org.wentura.getflow.Utility;
 import org.wentura.getflow.database.Database;
+
+import kotlin.Suppress;
 
 public class ActivitySettings extends AppCompatActivity {
 
@@ -206,124 +209,126 @@ public class ActivitySettings extends AppCompatActivity {
 
     @Override
     public boolean onOptionsItemSelected(@NonNull MenuItem item) {
-        switch (item.getItemId()) {
-            case R.id.edit_name_button:
-                MaterialAlertDialogBuilder builder = new MaterialAlertDialogBuilder(this);
-                builder.setTitle(R.string.new_activity_name);
+        if (item.getItemId() == R.id.edit_name_button) {
+            MaterialAlertDialogBuilder builder = new MaterialAlertDialogBuilder(this);
+            builder.setTitle(R.string.new_activity_name);
 
-                EditText editText = new EditText(this);
+            EditText editText = new EditText(this);
 
-                Database.databaseExecutor.execute(() -> {
-                    String activityName = database.activityDao().getName(activityId);
+            Database.databaseExecutor.execute(() -> {
+                String activityName = database.activityDao().getName(activityId);
+
+                runOnUiThread(() -> {
+                    editText.setText(activityName);
+                    editText.selectAll();
+                });
+            });
+
+            editText.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_FLAG_CAP_SENTENCES);
+            editText.requestFocus();
+
+            editText.addTextChangedListener(new TextWatcher() {
+                @Override
+                public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+                }
+
+                @Override
+                public void onTextChanged(CharSequence s, int start, int before, int count) {
+                }
+
+                @Override
+                public void afterTextChanged(Editable editable) {
+                    if (editable.toString().isEmpty() ||
+                            editable.toString().length() > Constants.MAX_ACTIVITY_NAME_LENGTH) {
+                        editText.getRootView().findViewById(android.R.id.button1).setEnabled(false);
+                    } else {
+                        editText.getRootView().findViewById(android.R.id.button1).setEnabled(true);
+                    }
+                }
+            });
+
+            builder.setView(getLinearLayoutWithMargins(editText));
+
+            builder.setPositiveButton(R.string.OK, (dialog, which) -> {
+                Database.databaseExecutor.execute(() ->
+                        database.activityDao().updateActivityName(activityId, editText.getText().toString()));
+
+                setTitle(editText.getText().toString());
+            });
+
+            builder.setNegativeButton(getString(R.string.cancel), (dialog, which) -> dialog.cancel());
+
+            AlertDialog dialog = builder.show();
+
+            Window window = dialog.getWindow();
+
+            if (window != null) {
+                window.setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_VISIBLE);
+            }
+            return true;
+        }
+        else if (item.getItemId() == R.id.delete_button) {
+            Database.databaseExecutor.execute(() -> {
+                int numberOfActivities = database.activityDao().getNumberOfActivities();
+
+                if (numberOfActivities <= 1) {
+                    runOnUiThread(() -> {
+                        MaterialAlertDialogBuilder cantDeleteDialog = new MaterialAlertDialogBuilder(this);
+                        cantDeleteDialog.setTitle(getString(R.string.delete_activity));
+                        cantDeleteDialog.setMessage(R.string.cantDeleteDialog);
+                        cantDeleteDialog.setNegativeButton(getString(R.string.OK), (dialog1, which) ->
+                                dialog1.cancel());
+                        cantDeleteDialog.show();
+                    });
+                } else {
+                    boolean isDataWritten = database.pomodoroDao().isDataWrittenWithActivity(activityId);
 
                     runOnUiThread(() -> {
-                        editText.setText(activityName);
-                        editText.selectAll();
-                    });
-                });
+                        MaterialAlertDialogBuilder deleteDialog = new MaterialAlertDialogBuilder(this);
+                        deleteDialog.setTitle(R.string.delete_activity);
 
-                editText.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_FLAG_CAP_SENTENCES);
-                editText.requestFocus();
-
-                editText.addTextChangedListener(new TextWatcher() {
-                    @Override
-                    public void beforeTextChanged(CharSequence s, int start, int count, int after) {
-                    }
-
-                    @Override
-                    public void onTextChanged(CharSequence s, int start, int before, int count) {
-                    }
-
-                    @Override
-                    public void afterTextChanged(Editable editable) {
-                        if (editable.toString().isEmpty() ||
-                                editable.toString().length() > Constants.MAX_ACTIVITY_NAME_LENGTH) {
-                            editText.getRootView().findViewById(android.R.id.button1).setEnabled(false);
+                        if (isDataWritten) {
+                            deleteDialog.setMessage(R.string.you_have_data_with_this_activity);
                         } else {
-                            editText.getRootView().findViewById(android.R.id.button1).setEnabled(true);
+                            deleteDialog.setMessage(R.string.delete_activity_message);
                         }
-                    }
-                });
 
-                builder.setView(getLinearLayoutWithMargins(editText));
-
-                builder.setPositiveButton(R.string.OK, (dialog, which) -> {
-                    Database.databaseExecutor.execute(() ->
-                            database.activityDao().updateActivityName(activityId, editText.getText().toString()));
-
-                    setTitle(editText.getText().toString());
-                });
-
-                builder.setNegativeButton(getString(R.string.cancel), (dialog, which) -> dialog.cancel());
-
-                AlertDialog dialog = builder.show();
-
-                Window window = dialog.getWindow();
-
-                if (window != null) {
-                    window.setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_VISIBLE);
-                }
-                return true;
-            case R.id.delete_button:
-                Database.databaseExecutor.execute(() -> {
-                    int numberOfActivities = database.activityDao().getNumberOfActivities();
-
-                    if (numberOfActivities <= 1) {
-                        runOnUiThread(() -> {
-                            MaterialAlertDialogBuilder cantDeleteDialog = new MaterialAlertDialogBuilder(this);
-                            cantDeleteDialog.setTitle(getString(R.string.delete_activity));
-                            cantDeleteDialog.setMessage(R.string.cantDeleteDialog);
-                            cantDeleteDialog.setNegativeButton(getString(R.string.OK), (dialog1, which) ->
-                                    dialog1.cancel());
-                            cantDeleteDialog.show();
-                        });
-                    } else {
-                        boolean isDataWritten = database.pomodoroDao().isDataWrittenWithActivity(activityId);
-
-                        runOnUiThread(() -> {
-                            MaterialAlertDialogBuilder deleteDialog = new MaterialAlertDialogBuilder(this);
-                            deleteDialog.setTitle(R.string.delete_activity);
-
-                            if (isDataWritten) {
-                                deleteDialog.setMessage(R.string.you_have_data_with_this_activity);
-                            } else {
-                                deleteDialog.setMessage(R.string.delete_activity_message);
-                            }
-
-                            deleteDialog.setPositiveButton(getString(R.string.confirm), (dialog1, which) -> {
-                                Database.databaseExecutor.execute(() -> {
-                                    database.activityDao().deleteActivity(activityId);
-                                    database.pomodoroDao().deleteAllDataWithActivityId(activityId);
-                                });
-
-                                SharedPreferences sharedPreferences =
-                                        PreferenceManager.getDefaultSharedPreferences(this);
-
-                                int currentActivityId = sharedPreferences.getInt(Constants.CURRENT_ACTIVITY_ID, 1);
-
-                                if (currentActivityId == activityId) {
-                                    Database.databaseExecutor.execute(() ->
-                                            sharedPreferences.edit().putInt(Constants.CURRENT_ACTIVITY_ID,
-                                                    database.activityDao().getFirstActivityID()).apply());
-                                }
-
-                                Intent intent = new Intent(this, Activities.class);
-                                intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
-                                startActivity(intent);
+                        deleteDialog.setPositiveButton(getString(R.string.confirm), (dialog1, which) -> {
+                            Database.databaseExecutor.execute(() -> {
+                                database.activityDao().deleteActivity(activityId);
+                                database.pomodoroDao().deleteAllDataWithActivityId(activityId);
                             });
 
-                            deleteDialog.setNegativeButton(getString(R.string.cancel), (dialog1, which) ->
-                                    dialog1.cancel());
+                            SharedPreferences sharedPreferences =
+                                    PreferenceManager.getDefaultSharedPreferences(this);
 
-                            deleteDialog.show();
+                            int currentActivityId = sharedPreferences.getInt(Constants.CURRENT_ACTIVITY_ID, 1);
+
+                            if (currentActivityId == activityId) {
+                                Database.databaseExecutor.execute(() ->
+                                        sharedPreferences.edit().putInt(Constants.CURRENT_ACTIVITY_ID,
+                                                database.activityDao().getFirstActivityID()).apply());
+                            }
+
+                            Intent intent = new Intent(this, Activities.class);
+                            intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+                            startActivity(intent);
                         });
-                    }
-                });
-                return true;
+
+                        deleteDialog.setNegativeButton(getString(R.string.cancel), (dialog1, which) ->
+                                dialog1.cancel());
+
+                        deleteDialog.show();
+                    });
+                }
+            });
+            return true;
         }
         return false;
     }
 
+
+    @SuppressLint("MissingSuperCall")
     @Override
     public void onBackPressed() {
         Intent intent = new Intent(this, Activities.class);

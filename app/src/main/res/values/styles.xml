@@ -70,4 +70,10 @@
     <style name="AppTheme.NavigationArrow" parent="@style/ThemeOverlay.AppCompat.ActionBar">
         <item name="colorControlNormal">@color/colorPrimary</item>
     </style>
+    <style name="WhiteAccentEditText" parent="Widget.AppCompat.EditText">
+    <item name="colorControlActivated">#FFFFFF</item>
+    <!--    <item name="colorControlNormal">#448aff</item>-->
+    <item name="android:textCursorDrawable">@drawable/white_cursor</item>
+    </style>
+
 </resources>

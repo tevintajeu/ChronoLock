@@ -30,6 +30,7 @@ import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.preference.PreferenceManager;
 
+import com.github.mikephil.charting.BuildConfig;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 
 public class AboutActivity extends AppCompatActivity {
